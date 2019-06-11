@@ -10,10 +10,10 @@ os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 parser = argparse.ArgumentParser(description = 'MSCRED encoder-decoder')
 parser.add_argument('--batch', type = int, default = 1,
 				   help = 'batch_size for data input') #current version supprts batch_size = 1
-parser.add_argument('--sensor_n', type = int, default = 30,
+parser.add_argument('--sensor_n', type = int, default = 26,
 				   help = 'number of sensors')
-parser.add_argument('--scale_n', type = int, default = 3,
-				   help = 'number of matrix scale')
+parser.add_argument('--win_size', type = int, default = [10, 30, 60],
+				   help = 'window size of each segment')
 parser.add_argument('--step_max', type = int, default = 5,
 				   help = 'maximum step of ConvLSTM')
 parser.add_argument('--learning_rate',  type=float, default= 0.0002,
@@ -30,9 +30,11 @@ parser.add_argument('--test_end_id',  type = int, default = 2000,
 						help = 'test end id')
 parser.add_argument('--save_model_step', type = int, default = 1,
 						help = 'number of iterations to save model')
-parser.add_argument('--model_path', type = str, default = '../MSCRED/',
+parser.add_argument('--model_path', type = str, default = '/home/zhaos/ts_data_csv2/MSCRED/',
 				   help='path to save models')
-parser.add_argument('--matrix_data_path', type = str, default = '../data/matrix_data/',
+parser.add_argument('--raw_data_path', type = str, default = '/home/zhaos/ts_data_csv2/ts_model_input.csv',
+				   help='path to load raw data')
+parser.add_argument('--matrix_data_path', type = str, default = '/home/zhaos/ts_data_csv2/signature_matrix/',
 				   help='matrix data path')
 # parser.add_argument('--test_input_path', type = str, default = '../data/matrix_data/test_data/',
 # 				   help='test input data path')
@@ -49,7 +51,7 @@ batch_size = args.batch
 learning_rate =args.learning_rate
 training_iters = args.training_iters
 sensor_n = args.sensor_n
-scale_n = args.scale_n
+win_size = args.win_size
 step_max= args.step_max
 
 train_start_id = args.train_start_id
@@ -57,6 +59,7 @@ train_end_id = args.train_end_id
 test_start_id = args.test_start_id
 test_end_id = args.test_end_id
 
+raw_data_path = args.raw_data_path
 model_path = args.model_path
 matrix_data_path = args.matrix_data_path
 train_data_path = matrix_data_path + "train_data/"
@@ -65,6 +68,9 @@ save_model_step = args.save_model_step
 
 train_test_label = args.train_test_label
 
+value_colnames = ['total_count','error_count','error_rate']
+scale_n = len(win_size) * len(value_colnames)
+sensor_n = np.unique(np.array(pd.read_csv(raw_data_path).iloc[:,:2])).shape[0]
 # set GPU
 #GPU_id = args.GPU_id
 #os.environ['CUDA_VISIBLE_DEVICES'] = str(GPU_id)
@@ -99,8 +105,8 @@ deconv3_W = tf.Variable(tf.zeros([2, 2, 64, 256]), name = "deconv3_W")
 deconv3_W = tf.get_variable("deconv3_W", shape = [2, 2, 64, 256], initializer=tf.contrib.layers.xavier_initializer())
 deconv2_W = tf.Variable(tf.zeros([3, 3, 32, 128]), name = "deconv2_W")
 deconv2_W = tf.get_variable("deconv2_W", shape = [3, 3, 32, 128], initializer=tf.contrib.layers.xavier_initializer())
-deconv1_W = tf.Variable(tf.zeros([3, 3, 3, 64]), name = "deconv1_W")
-deconv1_W = tf.get_variable("deconv1_W", shape = [3, 3, 3, 64], initializer=tf.contrib.layers.xavier_initializer())
+deconv1_W = tf.Variable(tf.zeros([3, 3, scale_n, 64]), name = "deconv1_W")
+deconv1_W = tf.get_variable("deconv1_W", shape = [3, 3, scale_n, 64], initializer=tf.contrib.layers.xavier_initializer())
 
 
 def cnn_encoder(input_matrix):
@@ -324,11 +330,11 @@ def cnn_decoder(conv1_lstm_out, conv2_lstm_out, conv3_lstm_out, conv4_lstm_out):
 	deconv1 = tf.nn.conv2d_transpose(
 	  value = deconv2_concat,
 	  filter = deconv1_W,
-	  output_shape = [1, sensor_n, sensor_n, 3],
+	  output_shape = [1, sensor_n, sensor_n, scale_n],
 	  strides = (1, 1, 1, 1),
 	  padding = "SAME")
 	deconv1 = tf.nn.selu(deconv1)
-	deconv1 = tf.reshape(deconv1, [1, sensor_n, sensor_n, 3])
+	deconv1 = tf.reshape(deconv1, [1, sensor_n, sensor_n, scale_n])
 	return deconv1
 
 
