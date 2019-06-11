@@ -42,12 +42,11 @@ print(args)
 
 ts_type = args.ts_type
 step_max = args.step_max
-
 min_time = args.min_time
 max_time = args.max_time
 gap_time = args.gap_time
 win_size = args.win_size
-scale_n = len(win_size)
+
 train_start = args.train_start_point
 train_end = args.train_end_point
 test_start = args.test_start_point
@@ -60,6 +59,8 @@ save_data_path = args.save_data_path
 value_colnames = ['total_count','error_count','error_rate']
 ts_colname="agg_time_interval"
 agg_freq='5min'
+
+scale_n = len(win_size) * len(value_colnames)
 
 matrix_data_path = save_data_path + "matrix_data/"
 if not os.path.exists(matrix_data_path):
