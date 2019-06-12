@@ -361,7 +361,10 @@ saver = tf.train.Saver(max_to_keep = 10)
 starting_iter = 50
 if train_test_label == 1: # model training
 	with tf.Session(config=tf.ConfigProto(inter_op_parallelism_threads=2, intra_op_parallelism_threads=2)) as sess:
-		sess.run(init)
+		if starting_iter == 0:
+			sess.run(init)
+		else:
+			saver.restore(sess, model_path + str(starting_iter-1) + ".ckpt")
 		start = timeit.default_timer()
 		for idx in range(starting_iter, starting_iter+training_iters):
 			print ("training iteration " + str(idx) + "...")
