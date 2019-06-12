@@ -358,12 +358,12 @@ optimizer = tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(loss)
 init = tf.global_variables_initializer()
 saver = tf.train.Saver(max_to_keep = 10)
 
-
+starting_iter = 50
 if train_test_label == 1: # model training
 	with tf.Session(config=tf.ConfigProto(inter_op_parallelism_threads=2, intra_op_parallelism_threads=2)) as sess:
 		sess.run(init)
 		start = timeit.default_timer()
-		for idx in range(training_iters):
+		for idx in range(starting_iter, starting_iter+training_iters):
 			print ("training iteration " + str(idx) + "...")
 			for train_id in range(train_start_id, train_end_id):
 				matrix_data_path = train_data_path + "train_data_" + str(train_id) + ".npy"
