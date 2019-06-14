@@ -360,7 +360,7 @@ saver = tf.train.Saver(max_to_keep = 10)
 
 starting_iter = 50
 if train_test_label == 1: # model training
-	with tf.Session(config=tf.ConfigProto(inter_op_parallelism_threads=2, intra_op_parallelism_threads=2)) as sess:
+	with tf.Session(config=tf.ConfigProto(inter_op_parallelism_threads=80, intra_op_parallelism_threads=80)) as sess:
 		if starting_iter == 0:
 			sess.run(init)
 		else:
@@ -394,7 +394,7 @@ if train_test_label == 1: # model training
 if train_test_label == 0: # model test
 	#learning_curve = open("../data/learning_curve.csv", "w")
 
-	with tf.Session(config=tf.ConfigProto(inter_op_parallelism_threads=2, intra_op_parallelism_threads=2)) as sess:
+	with tf.Session(config=tf.ConfigProto(inter_op_parallelism_threads=20, intra_op_parallelism_threads=20)) as sess:
 		restore_idx = 4 # setting restore_idx of learned model
 		saver.restore(sess, model_path + str(restore_idx) + ".ckpt")
 
