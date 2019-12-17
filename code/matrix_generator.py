@@ -170,7 +170,7 @@ def generate_signature_matrix_link():
 		data = pd.read_csv("/home/zhaos/ts_data_csv2/channel_"+value_col+".csv")
 		link_name_concat = data.iloc[:,1].values
 		data = data.iloc[:,1:].values
-
+		
 		#multi-scale signature matix generation
 		for w in range(len(win_size)):
 			matrix_all = []
@@ -185,8 +185,8 @@ def generate_signature_matrix_link():
 							sumprod = 0 # node_i -> node_j
 							source_node, dest_node = unique_link_name[i], unique_link_name[j]
 							sd_concat_index = np.where(link_name_concat == source_node+"-"+dest_node)[0]
-		                    if len(sd_concat_index) > 0:
-		                        link_vector = data[sd_concat_index[0], t - win:t]
+							if len(sd_concat_index) > 0:
+								link_vector = data[sd_concat_index[0], t - win:t]
 								for k in range(link_name.shape[0]):
 									if link_name[k][0] == dest_node:
 										# sum(vector(a->b) * vectro(b->c) + vector(a->b) * vectro(b->d) + ...)/count(b->c,d,...)
@@ -196,16 +196,16 @@ def generate_signature_matrix_link():
 										sumpprod += np.inner(data[k, t - win:t], link_vector)/(win)
 								matrix_t[i][j] = sumpprod
 				matrix_all.append(matrix_t)
-
+				
 				# if t == 70:
 				# 	print matrix_all[6][0]
-
+				
 			path_temp = "/home/zhaos/ts_data_csv2/signature_matrix/matrix_win_" + str(win) + str(value_col)
 			#print np.shape(matrix_all[0])
-
+			
 			np.save(path_temp, matrix_all)
 			del matrix_all[:]
-
+			
 		print ("matrix generation finish!")
 
 
